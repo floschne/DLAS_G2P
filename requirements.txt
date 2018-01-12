@@ -1,5 +1,4 @@
 tensorflow
-tensorflow-gpu>=1.0
 numpy
 nltk
 sklearn
