@@ -217,10 +217,10 @@ def log(msg):
     logging.info(msg)
 
 
-def main(data_path, ldr):
+def main(dp, ldr):
     # prepare the data that it fits into the LSTMs inputs
     grapheme_vocab_size, phoneme_vocab_size, grapheme_vocab_encoder, phoneme_vocab_encoder, encoded_graphemes, encoded_phonemes = prepare_data(
-        data_path,
+        dp,
         add_go_token=True,
         add_end_token=True,
         apply_padding=False,
