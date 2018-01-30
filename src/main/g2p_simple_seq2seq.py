@@ -1,20 +1,22 @@
 import logging
+import os
+import sys
 import time
 
-import os
+from sklearn.model_selection import train_test_split
 import data_util as dus
 import numpy as np
 import tensorflow as tf
 import tensorflow.contrib as tfc
-from sklearn.model_selection import train_test_split
 
-
-def prepare_data(go_token='<GO>', add_go_token=True,
+def prepare_data(data_path,
+                 go_token='<GO>', add_go_token=True,
                  pad_token='<PAD>', apply_padding=False,
                  end_token='<END>', add_end_token=True,
                  use_numpy_arrays=True):
+
     # load the cmudict data
-    du = dus.DataUtil()
+    du = dus.DataUtil(data_path)
     grapheme_vocab, phoneme_vocab, grapheme_sequences, phoneme_sequences, max_grapheme_seq_len, max_phoneme_seq_len = du.get_sequential_cmudict_for_lstm(
         stress_indicators=False)
 
@@ -206,8 +208,8 @@ def update_test_dec_input(old_dec_input, new_dec_prediction, batch_size=1):
 
 def generate_model_path(learning_rate, num_hidden_units, embedding_dim, batch_size, keep_prob, base="/home/p0w3r/"):
     return base + "seq2seq_g2p_lr{}_hidden{}_ed{}_bs{}_kp{}/".format(learning_rate, num_hidden_units, embedding_dim,
-                                                                    batch_size,
-                                                                    keep_prob)
+                                                                     batch_size,
+                                                                     keep_prob)
 
 
 def log(msg):
@@ -215,9 +217,10 @@ def log(msg):
     logging.info(msg)
 
 
-def main():
+def main(data_path, ldr):
     # prepare the data that it fits into the LSTMs inputs
     grapheme_vocab_size, phoneme_vocab_size, grapheme_vocab_encoder, phoneme_vocab_encoder, encoded_graphemes, encoded_phonemes = prepare_data(
+        data_path,
         add_go_token=True,
         add_end_token=True,
         apply_padding=False,
@@ -237,12 +240,12 @@ def main():
     use_dropout = True
     keep_prob = .8
 
-    base_path = generate_model_path(learning_rate, num_hidden_units, embedding_dim, batch_size, keep_prob)
-    if not os.path.exists(base_path):
-        os.makedirs(base_path)
+    log_data_root = generate_model_path(learning_rate, num_hidden_units, embedding_dim, batch_size, keep_prob, base_path=ldr)
+    if not os.path.exists(log_data_root):
+        os.makedirs(log_data_root)
 
-    model_saver_path = base_path + 'model.ckpt'
-    log_file_path = base_path + 'log.txt'
+    model_saver_path = log_data_root + 'model.ckpt'
+    log_file_path = log_data_root + 'log.txt'
 
     logging.basicConfig(filename=log_file_path, level=logging.DEBUG)
 
@@ -283,7 +286,6 @@ def main():
 
                 _, batch_loss, batch_logits, batch_logits_argmax = sess.run([optimizer, loss, logits, logits_argmax],
                                                                             feed_dict=f_dict)
-                # batch_accuracy = sk.metrics.accuracy_score(label_batch, batch_logits_argmax)
                 batch_accuracy = np.mean(batch_logits.argmax(axis=-1) == label_batch)
                 accuracies.append(batch_accuracy)
                 batch_losses.append(batch_loss)
@@ -300,7 +302,6 @@ def main():
             )
             save_path = saver.save(sess, model_saver_path, global_step=epoch_i)
             log('Saving model parameters in file: ' + model_saver_path)
-            learning_rate *= 0.9
             log("learning rate: {}".format(learning_rate))
             batch_losses.clear()
             accuracies.clear()
@@ -334,4 +335,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    print('Number of arguments:', len(sys.argv), 'arguments.')
+    print('Argument List:', str(sys.argv))
+
+    main(data_path=sys.argv[1], log_data_root=sys.argv[2])

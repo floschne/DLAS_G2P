@@ -48,7 +48,6 @@ class SimpleVocabularyEncoder(object):
         assert len(self.__decoder_dict) == len(self.__encoder_dict) == len(self.__vocab)
 
 
-
 # TODO why is cwd different in debug and run mode?!
 class DataUtil(object):
     path_to_cmudict_repo = '../../data/cmudict/'
@@ -174,7 +173,8 @@ class DataUtil(object):
         if not os.path.isdir(path_to_store_files):
             os.mkdir(path_to_store_files)
 
-        grapheme_vocab, phoneme_vocab, grapheme_sequences, phoneme_sequences, _, _ = self.get_sequential_cmudict_for_lstm(stress_indicators=False)
+        grapheme_vocab, phoneme_vocab, grapheme_sequences, phoneme_sequences, _, _ = self.get_sequential_cmudict_for_lstm(
+            stress_indicators=False)
 
         # create the vocabulary files
         #  for phonemes vocab already there, so just do a simple copy
@@ -239,7 +239,6 @@ class DataUtil(object):
                nmt_grapheme_dev_file_name, nmt_phoneme_dev_file_name
 
 
-
 if __name__ == '__main__':
     print('current working dir:' + os.getcwd())
 
@@ -247,5 +246,3 @@ if __name__ == '__main__':
     # cmudict = d_util.load_data()
     d_util.generate_cmudict_files_for_tf_nmt()
     # grapheme_vocab, phoneme_vocab, grapheme_word_list, phoneme_word_list, max_grapheme_seq_len, max_phoneme_seq_len = d_util.get_sequential_cmudict_for_lstm()
-
-
