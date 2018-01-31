@@ -198,12 +198,14 @@ def update_test_dec_input(old_dec_input, new_dec_prediction, batch_size=1):
     # init dec input (with <GO> token!)
     if old_dec_input is None:
         old_dec_input = np.zeros((batch_size, 1)) + new_dec_prediction
-        return old_dec_input
+        dec_input_lens = np.ones((batch_size, 1))  # init with only <GO> token -> len = 1
+        return old_dec_input, dec_input_lens
 
     # new decoder input is the old decoder input PLUS the newly predicted output of the decoder
     new_dec_input = np.hstack([old_dec_input, new_dec_prediction[:, None]])
+    dec_input_lens = [[len(ndi)] for ndi in new_dec_input]
 
-    return new_dec_input
+    return new_dec_input, dec_input_lens
 
 
 def generate_model_path(learning_rate, num_hidden_units, embedding_dim, batch_size, keep_prob, base="/home/p0w3r/"):
@@ -232,7 +234,7 @@ def main(dp, ldr):
         encoded_graphemes, encoded_phonemes)
 
     # hyper parameters
-    learning_rate = 0.001
+    learning_rate = 0.01
     num_hidden_units = 100
     embedding_dim = 10
     epochs = 20
@@ -314,13 +316,13 @@ def main(dp, ldr):
             generate_batch_data(grapheme_sequences_test, phoneme_sequences_test, batch_size)):
 
             # init dec input with <GO> token
-            dec_input = update_test_dec_input(None, phoneme_vocab_encoder.encode('<GO>'), batch_size=batch_size)
+            dec_input, dec_input_lens = update_test_dec_input(None, phoneme_vocab_encoder.encode('<GO>'), batch_size=batch_size)
 
             # predict new phonemes until <END> token was output before
             # TODO ONLY WORKS WITH BATCH SIZE 1! how can i stop predicting independently for each element in batch?
             while phoneme_vocab_encoder.encode('<END>') not in dec_input[:][-1]:
                 # build training feed dict without labels
-                f_dict_test = {gra_inputs: dec_input,
+                f_dict_test = {gra_inputs: input_batch,
                                gra_input_lens: input_lens_batch,
                                dec_pho_inputs: dec_input_batch,
                                dec_pho_input_lens: dec_input_lens_batch}
@@ -329,7 +331,7 @@ def main(dp, ldr):
                 test_batch_accuracy = np.mean(test_batch_logits.argmax(axis=-1) == label_batch)
                 test_accuracies.append(test_batch_accuracy)
 
-                dec_input = update_test_dec_input(None, phoneme_vocab_encoder.encode('<GO>'))
+                dec_input, dec_input_lens = update_test_dec_input(None, phoneme_vocab_encoder.encode('<GO>'))
 
             log('Mean Test Accuracy on test set is: {:>6.3f}'.format(np.mean(test_accuracies)))
 
