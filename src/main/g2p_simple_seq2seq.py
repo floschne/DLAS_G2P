@@ -240,7 +240,7 @@ def main(dp, ldr):
     use_dropout = True
     keep_prob = .8
 
-    log_data_root = generate_model_path(learning_rate, num_hidden_units, embedding_dim, batch_size, keep_prob, base_path=ldr)
+    log_data_root = generate_model_path(learning_rate, num_hidden_units, embedding_dim, batch_size, keep_prob, base=ldr)
     if not os.path.exists(log_data_root):
         os.makedirs(log_data_root)
 
@@ -338,4 +338,4 @@ if __name__ == '__main__':
     print('Number of arguments:', len(sys.argv), 'arguments.')
     print('Argument List:', str(sys.argv))
 
-    main(data_path=sys.argv[1], log_data_root=sys.argv[2])
+    main(sys.argv[1], sys.argv[2])
